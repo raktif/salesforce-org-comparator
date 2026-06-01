@@ -19,7 +19,7 @@ public class HelpWindow extends JDialog {
 
     // Anchors embeds no HTML para scrollToReference()
     private static final String[] ANCHORS = {
-        "overview", "org-setup", "comp-config", "running", "results", "toolbar", "save-load", "errors"
+        "overview", "org-setup", "comp-config", "running", "results", "toolbar", "save-load", "errors", "repo-compare"
     };
 
     private static final String[][] NAV_LABELS = {
@@ -31,7 +31,8 @@ public class HelpWindow extends JDialog {
             "5. Tabela de Resultados",
             "6. Barra de Ferramentas",
             "7. Salvar / Carregar Config.",
-            "8. Limita\u00e7\u00f5es e Erros"
+            "8. Limita\u00e7\u00f5es e Erros",
+            "9. Comparar Reposit\u00f3rio"
         },
         { // EN
             "1. Overview",
@@ -41,7 +42,8 @@ public class HelpWindow extends JDialog {
             "5. Results Table",
             "6. Toolbar",
             "7. Save / Load Settings",
-            "8. Limitations & Errors"
+            "8. Limitations & Errors",
+            "9. Compare with Repository"
         }
     };
 
@@ -446,6 +448,44 @@ public class HelpWindow extends JDialog {
             + "<li><b>Profiles e Permission Sets:</b> comparados por quantidade de linhas no XML &mdash; permiss&otilde;es individuais n&atilde;o s&atilde;o detalhadas nesta vers&atilde;o.</li>"
             + "<li>Metadados n&atilde;o listados nas op&ccedil;&otilde;es (ex: Reports, Dashboards, Workflows legados) n&atilde;o s&atilde;o verificados por esta vers&atilde;o do software.</li>"
             + "</ul>"
+            + "<hr/>"
+
+            // ── 9. Comparar com Repositório ──────────────────────────────
+            + "<a name='repo-compare'></a>"
+            + "<h2>9. Comparar com Reposit&oacute;rio Local</h2>"
+            + "<p>A aba <i>Comparar Reposit&oacute;rio</i> permite comparar os metadados presentes em uma org Salesforce com os metadados armazenados em um projeto SFDX local. Ideal para auditar se a org est&aacute; em conformidade com o c&oacute;digo-fonte versionado no reposit&oacute;rio.</p>"
+            + "<h3>Pr&eacute;-requisito: Caminho do Projeto Local</h3>"
+            + "<p>Antes de usar esta aba, preencha o campo <b>Caminho do Projeto Local</b> na aba <i>Configura&ccedil;&atilde;o</i>. O caminho deve apontar para a pasta raiz do projeto SFDX &mdash; aquela que cont&eacute;m a estrutura <code>force-app/main/default/</code>.</p>"
+            + "<ul>"
+            + "<li>Se o caminho informado n&atilde;o existir, uma mensagem de erro em vermelho &eacute; exibida abaixo do campo.</li>"
+            + "<li>A aba <i>Comparar Reposit&oacute;rio</i> fica desabilitada at&eacute; que um caminho v&aacute;lido seja fornecido.</li>"
+            + "</ul>"
+            + "<h3>Sele&ccedil;&atilde;o de Tipos de Metadados</h3>"
+            + "<p>Ao informar um caminho v&aacute;lido, o software varre as pastas do projeto automaticamente e <b>habilita apenas os checkboxes</b> cujas pastas de metadado existem e possuem conte&uacute;do. Tipos cujas pastas estejam ausentes ou vazias permanecem desabilitados.</p>"
+            + "<table><tr><td><b>Aten&ccedil;&atilde;o:</b> Se mais de 3 tipos forem selecionados simultaneamente, um aviso de desempenho ser&aacute; exibido antes de iniciar a compara&ccedil;&atilde;o, pois o processo pode ser lento.</td></tr></table>"
+            + "<h3>Bot&otilde;es de Compara&ccedil;&atilde;o</h3>"
+            + "<table>"
+            + "<tr><th>Bot&atilde;o</th><th>A&ccedil;&atilde;o</th></tr>"
+            + "<tr><td><b>Comparar com Org 1</b> (azul)</td><td>Compara os metadados selecionados contra os presentes na Org 1</td></tr>"
+            + "<tr><td><b>Comparar com Org 2</b> (verde)</td><td>Compara os metadados selecionados contra os presentes na Org 2</td></tr>"
+            + "</table>"
+            + "<h3>Fluxo de Execu&ccedil;&atilde;o</h3>"
+            + "<ol>"
+            + "<li>O software autentica na org selecionada via OAuth 2.0 (usando as credenciais da aba <i>Configura&ccedil;&atilde;o</i>)</li>"
+            + "<li>Para cada tipo de metadado selecionado, <b>recupera todos os itens diretamente da org</b> via Salesforce CLI</li>"
+            + "<li>Compara os itens recuperados com os arquivos <code>*-meta.xml</code> na pasta correspondente do projeto local</li>"
+            + "<li>Exibe os resultados na aba <i>Resultados</i></li>"
+            + "</ol>"
+            + "<h3>Interpreta&ccedil;&atilde;o dos Resultados</h3>"
+            + "<table>"
+            + "<tr><th>Situa&ccedil;&atilde;o</th><th>Org X</th><th>Detalhes</th></tr>"
+            + "<tr><td>Item existe na org, mas n&atilde;o no reposit&oacute;rio local</td><td><b>Presente</b></td><td>Presente na Org X, ausente no reposit&oacute;rio local.</td></tr>"
+            + "<tr><td>Item existe no reposit&oacute;rio local, mas n&atilde;o na org</td><td><b>Ausente</b></td><td>Presente no reposit&oacute;rio local, ausente na Org X.</td></tr>"
+            + "<tr><td>Item existe em ambos com conte&uacute;do diferente</td><td><b>Divergente</b></td><td>Local: X bytes | Org X: Y bytes.</td></tr>"
+            + "</table>"
+            + "<table><tr><td><b>Nota:</b> A compara&ccedil;&atilde;o &eacute; feita pelo <b>nome do arquivo</b> (independente do caminho relativo interno) e pelo <b>conte&uacute;do</b> dos arquivos <code>*-meta.xml</code>. A estrutura interna dos metadados n&atilde;o &eacute; analisada item a item nesta vers&atilde;o.</td></tr></table>"
+            + "<hr/>"
+            + "<p style='text-align:center;color:#888;font-size:10pt;margin-top:20px;'><i>Salesforce Org Comparator &mdash; v1.1 &mdash; Criado por Raktif</i></p>"
             + "</body></html>";
     }
 
@@ -694,6 +734,44 @@ public class HelpWindow extends JDialog {
             + "<li><b>Profiles and Permission Sets:</b> compared by XML line count &mdash; individual permissions are not detailed in this version.</li>"
             + "<li>Metadata not listed in the comparison options (e.g., Reports, Dashboards, legacy Workflows) is not checked in this version.</li>"
             + "</ul>"
+            + "<hr/>"
+
+            // ── 9. Compare with Repository ───────────────────────────────
+            + "<a name='repo-compare'></a>"
+            + "<h2>9. Compare with Local Repository</h2>"
+            + "<p>The <i>Compare Repository</i> tab allows you to compare metadata present in a Salesforce org against metadata stored in a local SFDX project. Ideal for auditing whether the org is in sync with the versioned source code in the repository.</p>"
+            + "<h3>Prerequisite: Local Project Path</h3>"
+            + "<p>Before using this tab, fill in the <b>Local Project Path</b> field in the <i>Configuration</i> tab. The path must point to the root folder of the SFDX project &mdash; the one containing the <code>force-app/main/default/</code> structure.</p>"
+            + "<ul>"
+            + "<li>If the provided path does not exist, a red error message appears below the field.</li>"
+            + "<li>The <i>Compare Repository</i> tab remains disabled until a valid path is provided.</li>"
+            + "</ul>"
+            + "<h3>Selecting Metadata Types</h3>"
+            + "<p>When a valid path is entered, the software automatically scans the project folders and <b>enables only the checkboxes</b> whose metadata folders exist and contain files. Types with absent or empty folders remain disabled.</p>"
+            + "<table><tr><td><b>Note:</b> If more than 3 metadata types are selected at once, a performance warning will appear before starting the comparison, as the process may be slow.</td></tr></table>"
+            + "<h3>Comparison Buttons</h3>"
+            + "<table>"
+            + "<tr><th>Button</th><th>Action</th></tr>"
+            + "<tr><td><b>Compare with Org 1</b> (blue)</td><td>Compares the selected metadata against those present in Org 1</td></tr>"
+            + "<tr><td><b>Compare with Org 2</b> (green)</td><td>Compares the selected metadata against those present in Org 2</td></tr>"
+            + "</table>"
+            + "<h3>Execution Flow</h3>"
+            + "<ol>"
+            + "<li>The software authenticates to the selected org via OAuth 2.0 (using the credentials from the <i>Configuration</i> tab)</li>"
+            + "<li>For each selected metadata type, <b>retrieves all items directly from the org</b> via Salesforce CLI</li>"
+            + "<li>Compares the retrieved items against the <code>*-meta.xml</code> files in the corresponding folder of the local project</li>"
+            + "<li>Displays results in the <i>Results</i> tab</li>"
+            + "</ol>"
+            + "<h3>Interpreting Results</h3>"
+            + "<table>"
+            + "<tr><th>Situation</th><th>Org X</th><th>Details</th></tr>"
+            + "<tr><td>Item exists in org but not in the local repository</td><td><b>Present</b></td><td>Present in Org X, absent from local repository.</td></tr>"
+            + "<tr><td>Item exists in the local repository but not in the org</td><td><b>Absent</b></td><td>Present in local repository, absent from Org X.</td></tr>"
+            + "<tr><td>Item exists in both but with different content</td><td><b>Divergent</b></td><td>Local: X bytes | Org X: Y bytes.</td></tr>"
+            + "</table>"
+            + "<table><tr><td><b>Note:</b> Comparison is performed by <b>file name</b> (regardless of the internal relative path) and by <b>content</b> of the <code>*-meta.xml</code> files. The internal metadata structure is not analyzed item by item in this version.</td></tr></table>"
+            + "<hr/>"
+            + "<p style='text-align:center;color:#888;font-size:10pt;margin-top:20px;'><i>Salesforce Org Comparator &mdash; v1.1 &mdash; Created by Raktif</i></p>"
             + "</body></html>";
     }
 }

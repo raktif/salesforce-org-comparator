@@ -7,13 +7,18 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import com.sfcomparator.api.SalesforceAPIClient;
 import com.sfcomparator.cli.CLIExecutor;
 import com.sfcomparator.comparator.ComparisonEngine;
+import com.sfcomparator.comparator.RepoComparisonEngine;
 import com.sfcomparator.model.ComparisonConfig;
 import com.sfcomparator.model.Difference;
+import com.sfcomparator.model.MetadataRegistry;
 import com.sfcomparator.model.OrgConnection;
 import com.sfcomparator.util.SettingsManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -22,6 +27,7 @@ import org.json.JSONObject;
 public class MainWindow extends JFrame {
     private OrgConnectionPanel org1Panel;
     private OrgConnectionPanel org2Panel;
+    private ProjectSettingsPanel projectSettingsPanel;
     private ComparisonConfigPanel configPanel;
     private ResultsPanel resultsPanel;
     private JButton compareButton;
@@ -32,6 +38,9 @@ public class MainWindow extends JFrame {
     private JLabel headerLabel;
     private JTabbedPane tabbedPane;
     private HelpWindow helpWindow;
+    private CompareRepoPanel compareRepoPanel;
+    private JButton compareWithOrg1Button;
+    private JButton compareWithOrg2Button;
 
     public MainWindow() {
         setTitle(LanguageManager.get("app.title"));
@@ -56,15 +65,30 @@ public class MainWindow extends JFrame {
         headerLabel.setForeground(Color.WHITE);
         headerPanel.add(headerLabel);
 
-        // Org connections
-        JPanel connectionsPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        // Org connections + project settings — cada painel usa sua altura natural
+        JPanel connectionsPanel = new JPanel(new GridBagLayout());
         connectionsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         connectionsPanel.setBackground(new Color(240, 240, 245));
 
         org1Panel = new OrgConnectionPanel("org1.title");
         org2Panel = new OrgConnectionPanel("org2.title");
-        connectionsPanel.add(org1Panel);
-        connectionsPanel.add(org2Panel);
+        projectSettingsPanel = new ProjectSettingsPanel();
+
+        GridBagConstraints gbcConn = new GridBagConstraints();
+        gbcConn.fill = GridBagConstraints.HORIZONTAL;
+        gbcConn.weightx = 1.0;
+        gbcConn.weighty = 0;
+        gbcConn.gridx = 0;
+
+        gbcConn.gridy = 0;
+        connectionsPanel.add(org1Panel, gbcConn);
+
+        gbcConn.gridy = 1;
+        gbcConn.insets = new Insets(10, 0, 0, 0);
+        connectionsPanel.add(org2Panel, gbcConn);
+
+        gbcConn.gridy = 2;
+        connectionsPanel.add(projectSettingsPanel, gbcConn);
 
         // Config panel
         configPanel = new ComparisonConfigPanel();
@@ -74,7 +98,7 @@ public class MainWindow extends JFrame {
         resultsPanel = new ResultsPanel();
         resultsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Botão Start Comparison (permanece inalterado)
+        // Botão Start Comparison — posicionado na aba Comparar Orgs
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         controlPanel.setBackground(new Color(240, 240, 245));
 
@@ -93,10 +117,43 @@ public class MainWindow extends JFrame {
         JPanel inputPanel = new JPanel(new BorderLayout());
         inputPanel.setBackground(new Color(240, 240, 245));
         inputPanel.add(connectionsPanel, BorderLayout.NORTH);
-        inputPanel.add(configPanel, BorderLayout.CENTER);
+
+        JPanel compareOrgsPanel = new JPanel(new BorderLayout());
+        compareOrgsPanel.setBackground(new Color(240, 240, 245));
+        compareOrgsPanel.add(configPanel, BorderLayout.CENTER);
+        compareOrgsPanel.add(controlPanel, BorderLayout.SOUTH);
+
+        compareRepoPanel = new CompareRepoPanel();
+
+        compareWithOrg1Button = new JButton(LanguageManager.get("btn.compareWithOrg1"));
+        compareWithOrg1Button.setFont(new Font("Arial", Font.BOLD, 12));
+        compareWithOrg1Button.setBackground(new Color(0, 120, 215));
+        compareWithOrg1Button.setForeground(Color.WHITE);
+        compareWithOrg1Button.setFocusPainted(false);
+        compareWithOrg1Button.setPreferredSize(new Dimension(200, 35));
+
+        compareWithOrg2Button = new JButton(LanguageManager.get("btn.compareWithOrg2"));
+        compareWithOrg2Button.setFont(new Font("Arial", Font.BOLD, 12));
+        compareWithOrg2Button.setBackground(new Color(34, 139, 34));
+        compareWithOrg2Button.setForeground(Color.WHITE);
+        compareWithOrg2Button.setFocusPainted(false);
+        compareWithOrg2Button.setPreferredSize(new Dimension(200, 35));
+
+        JPanel compareRepoControlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 10));
+        compareRepoControlPanel.setBackground(new Color(240, 240, 245));
+        compareRepoControlPanel.add(compareWithOrg1Button);
+        compareRepoControlPanel.add(compareWithOrg2Button);
+
+        JPanel compareRepoWrapper = new JPanel(new BorderLayout());
+        compareRepoWrapper.setBackground(new Color(240, 240, 245));
+        compareRepoWrapper.add(compareRepoPanel, BorderLayout.CENTER);
+        compareRepoWrapper.add(compareRepoControlPanel, BorderLayout.SOUTH);
 
         tabbedPane.addTab(LanguageManager.get("tab.config"), inputPanel);
+        tabbedPane.addTab(LanguageManager.get("tab.compareOrgs"), compareOrgsPanel);
+        tabbedPane.addTab(LanguageManager.get("tab.compareRepo"), compareRepoWrapper);
         tabbedPane.addTab(LanguageManager.get("tab.results"), resultsPanel);
+        tabbedPane.setEnabledAt(2, false);
 
         // Toolbar: Salvar, Carregar, Idioma, Ajuda
         JToolBar toolBar = new JToolBar();
@@ -143,7 +200,6 @@ public class MainWindow extends JFrame {
         // Main layout
         mainPanel.add(northArea, BorderLayout.NORTH);
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
-        mainPanel.add(controlPanel, BorderLayout.SOUTH);
 
         setContentPane(mainPanel);
     }
@@ -154,6 +210,9 @@ public class MainWindow extends JFrame {
         resultsPanel.getClearButton().addActionListener(e -> resultsPanel.clearResults());
         saveSettingsButton.addActionListener(e -> saveSettings());
         loadSettingsButton.addActionListener(e -> loadSettings());
+        projectSettingsPanel.addPathChangeListener(this::validateAndScanPath);
+        compareWithOrg1Button.addActionListener(e -> executeRepoComparison(1));
+        compareWithOrg2Button.addActionListener(e -> executeRepoComparison(2));
     }
 
     private void executeComparison() {
@@ -180,10 +239,16 @@ public class MainWindow extends JFrame {
             return;
         }
         if (!hasSobject && hasObjectBound) {
-            int opt = JOptionPane.showConfirmDialog(this,
+            Object[] noSobjectOptions = {
+                LanguageManager.get("btn.yes"),
+                LanguageManager.get("btn.no")
+            };
+            int opt = JOptionPane.showOptionDialog(this,
                 LanguageManager.get("val.noSobjectMsg"),
-                LanguageManager.get("val.noSobjectTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-            if (opt != JOptionPane.YES_OPTION) return;
+                LanguageManager.get("val.noSobjectTitle"),
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
+                null, noSobjectOptions, noSobjectOptions[0]);
+            if (opt != 0) return;
         }
         if (org1Panel.getInstanceUrl().isBlank() || org2Panel.getInstanceUrl().isBlank()) {
             JOptionPane.showMessageDialog(this,
@@ -245,14 +310,13 @@ public class MainWindow extends JFrame {
         progressDialog.setLocationRelativeTo(this);
         progressDialog.setVisible(true);
 
-        Thread[] taskThread = {null};
         cancelButton.addActionListener(e -> {
             cancelled.set(true);
             cancelButton.setEnabled(false);
             statusLabel.setText(LanguageManager.get("dlg.status.cancelling"));
         });
 
-        taskThread[0] = new Thread(() -> {
+        new Thread(() -> {
             CLIExecutor cli = null;
             try {
                 OrgConnection org1Connection = new OrgConnection("Org 1");
@@ -309,7 +373,7 @@ public class MainWindow extends JFrame {
                 SwingUtilities.invokeLater(() -> {
                     progressDialog.dispose();
                     resultsPanel.displayResults(differences);
-                    tabbedPane.setSelectedIndex(1);
+                    tabbedPane.setSelectedIndex(3);
                     compareButton.setEnabled(true);
                     compareButton.setText(LanguageManager.get("btn.compare"));
                     int total = differences.size();
@@ -338,7 +402,7 @@ public class MainWindow extends JFrame {
             } finally {
                 if (cli != null) cli.close();
             }
-        }); taskThread[0].start();
+        }).start();
     }
 
     private void showScrollableError(String title, String message) {
@@ -540,10 +604,14 @@ public class MainWindow extends JFrame {
             cfg.put("permissionSetsFilter",      configPanel.getPermissionSetsFilter());
             cfg.put("profilesFilter",            configPanel.getProfilesFilter());
 
+            JSONObject project = new JSONObject();
+            project.put("localPath", projectSettingsPanel.getLocalPath());
+
             JSONObject root = new JSONObject();
-            root.put("org1",   org1);
-            root.put("org2",   org2);
-            root.put("config", cfg);
+            root.put("org1",    org1);
+            root.put("org2",    org2);
+            root.put("config",  cfg);
+            root.put("project", project);
 
             new SettingsManager().saveToFile(root.toString(), file);
 
@@ -602,9 +670,16 @@ public class MainWindow extends JFrame {
             configPanel.setPermissionSetsFilter(cfg.optString("permissionSetsFilter", ""));
             configPanel.setProfilesFilter(cfg.optString("profilesFilter", ""));
 
+            // Configurações do Projeto (compatível com arquivos salvos em versões anteriores)
+            JSONObject project = root.optJSONObject("project");
+            if (project != null) {
+                projectSettingsPanel.setLocalPath(project.optString("localPath", ""));
+            }
+
             JOptionPane.showMessageDialog(this,
                 LanguageManager.get("msg.loaded"),
                 LanguageManager.get("msg.loadedTitle"), JOptionPane.INFORMATION_MESSAGE);
+            SwingUtilities.invokeLater(this::validateAndScanPath);
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
@@ -627,12 +702,219 @@ public class MainWindow extends JFrame {
         setTitle(LanguageManager.get("app.title"));
         headerLabel.setText(LanguageManager.get("header.title"));
         tabbedPane.setTitleAt(0, LanguageManager.get("tab.config"));
-        tabbedPane.setTitleAt(1, LanguageManager.get("tab.results"));
+        tabbedPane.setTitleAt(1, LanguageManager.get("tab.compareOrgs"));
+        tabbedPane.setTitleAt(2, LanguageManager.get("tab.compareRepo"));
+        tabbedPane.setTitleAt(3, LanguageManager.get("tab.results"));
         compareButton.setText(LanguageManager.get("btn.compare"));
+        compareWithOrg1Button.setText(LanguageManager.get("btn.compareWithOrg1"));
+        compareWithOrg2Button.setText(LanguageManager.get("btn.compareWithOrg2"));
         saveSettingsButton.setToolTipText(LanguageManager.get("toolbar.save"));
         loadSettingsButton.setToolTipText(LanguageManager.get("toolbar.load"));
         languageButton.setToolTipText(LanguageManager.get("toolbar.lang"));
         helpButton.setToolTipText(LanguageManager.get("toolbar.help"));
+    }
+
+    // ---- Comparação com repositório local --------------------------------
+
+    private void executeRepoComparison(int orgNumber) {
+        List<String> selected = compareRepoPanel.getSelectedMetadata();
+        if (selected.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                LanguageManager.get("val.nothingSelected"),
+                LanguageManager.get("val.nothingTitle"), JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (selected.size() > 3) {
+            Object[] warnOptions = {
+                LanguageManager.get("btn.yes"),
+                LanguageManager.get("btn.no")
+            };
+            int opt = JOptionPane.showOptionDialog(this,
+                LanguageManager.get("msg.repo.warn.text"),
+                LanguageManager.get("msg.repo.warn.title"),
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
+                null, warnOptions, warnOptions[0]);
+            if (opt != 0) return;
+        }
+
+        OrgConnectionPanel orgPanel = (orgNumber == 1) ? org1Panel : org2Panel;
+        if (orgPanel.getInstanceUrl().isBlank()) {
+            JOptionPane.showMessageDialog(this,
+                LanguageManager.get("val.instanceRequired"),
+                LanguageManager.get("val.requiredField"), JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (orgPanel.getClientId().isBlank()) {
+            JOptionPane.showMessageDialog(this,
+                LanguageManager.get("val.clientIdRequired"),
+                LanguageManager.get("val.requiredField"), JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String basePath = projectSettingsPanel.getLocalPath();
+        compareWithOrg1Button.setEnabled(false);
+        compareWithOrg2Button.setEnabled(false);
+
+        AtomicBoolean cancelled = new AtomicBoolean(false);
+
+        JDialog progressDialog = new JDialog(this, LanguageManager.get("dlg.progress.title"), false);
+        progressDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        progressDialog.setResizable(false);
+        JPanel progressContent = new JPanel(new BorderLayout(10, 14));
+        progressContent.setBorder(BorderFactory.createEmptyBorder(20, 28, 20, 28));
+        JLabel statusLabel = new JLabel() {
+            @Override public void setText(String t) {
+                if (t != null && !t.startsWith("<html>"))
+                    t = "<html><div style='text-align:center'>" + t + "</div></html>";
+                super.setText(t);
+            }
+        };
+        statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        statusLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+        statusLabel.setPreferredSize(new Dimension(500, 46));
+        statusLabel.setText(LanguageManager.get("dlg.status.startAuth"));
+        JProgressBar progressBar = new JProgressBar();
+        progressBar.setIndeterminate(true);
+        JButton cancelButton = new JButton(LanguageManager.get("dlg.cancel"));
+        cancelButton.setBackground(new Color(220, 53, 69));
+        cancelButton.setForeground(Color.WHITE);
+        cancelButton.setFont(new Font("Arial", Font.BOLD, 12));
+        cancelButton.setFocusPainted(false);
+        cancelButton.setOpaque(true);
+        cancelButton.setBorderPainted(false);
+        JPanel cancelPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 4));
+        cancelPanel.setOpaque(false);
+        cancelPanel.add(cancelButton);
+        JPanel bottomPanel = new JPanel(new BorderLayout(0, 6));
+        bottomPanel.setOpaque(false);
+        bottomPanel.add(progressBar, BorderLayout.NORTH);
+        bottomPanel.add(cancelPanel, BorderLayout.SOUTH);
+        progressContent.add(statusLabel, BorderLayout.CENTER);
+        progressContent.add(bottomPanel, BorderLayout.SOUTH);
+        progressDialog.add(progressContent);
+        progressDialog.pack();
+        progressDialog.setMinimumSize(new Dimension(560, 165));
+        progressDialog.setLocationRelativeTo(this);
+        progressDialog.setVisible(true);
+
+        cancelButton.addActionListener(e -> {
+            cancelled.set(true);
+            cancelButton.setEnabled(false);
+            statusLabel.setText(LanguageManager.get("dlg.status.cancelling"));
+        });
+
+        new Thread(() -> {
+            CLIExecutor cli = null;
+            try {
+                OrgConnection orgConnection = new OrgConnection("Org " + orgNumber);
+                orgConnection.setInstanceUrl(orgPanel.getInstanceUrl());
+                orgConnection.setSecurityToken(orgPanel.getSecurityToken());
+                orgConnection.setClientId(orgPanel.getClientId());
+                orgConnection.setClientSecret(orgPanel.getClientSecret());
+
+                String authKey = (orgNumber == 1) ? "dlg.status.authOrg1" : "dlg.status.authOrg2";
+                SwingUtilities.invokeLater(() -> statusLabel.setText(LanguageManager.get(authKey)));
+                SalesforceAPIClient orgClient = new SalesforceAPIClient(orgConnection);
+                orgClient.authenticate();
+
+                SwingUtilities.invokeLater(() -> statusLabel.setText(LanguageManager.get("dlg.status.cli")));
+                CLIExecutor.checkAvailable();
+                cli = new CLIExecutor();
+                if (orgNumber == 1) {
+                    cli.registerOrg1(orgConnection.getInstanceUrl(), orgConnection.getAccessToken());
+                } else {
+                    cli.registerOrg2(orgConnection.getInstanceUrl(), orgConnection.getAccessToken());
+                }
+
+                RepoComparisonEngine engine = new RepoComparisonEngine(cli, basePath, selected, orgNumber);
+                engine.setProgressCallback(msg ->
+                    SwingUtilities.invokeLater(() -> statusLabel.setText(msg)));
+                engine.setCancelFlag(cancelled);
+                List<Difference> differences = engine.executeComparison();
+
+                SwingUtilities.invokeLater(() -> {
+                    progressDialog.dispose();
+                    resultsPanel.displayResults(differences);
+                    tabbedPane.setSelectedIndex(3);
+                    compareWithOrg1Button.setEnabled(true);
+                    compareWithOrg2Button.setEnabled(true);
+                    int total = differences.size();
+                    String msg = total == 0
+                        ? LanguageManager.get("msg.noDiff")
+                        : LanguageManager.get("msg.foundDiff", total);
+                    JOptionPane.showMessageDialog(this, msg,
+                        LanguageManager.get("dlg.done.title"),
+                        total == 0 ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE);
+                });
+
+            } catch (InterruptedException ie) {
+                SwingUtilities.invokeLater(() -> {
+                    progressDialog.dispose();
+                    compareWithOrg1Button.setEnabled(true);
+                    compareWithOrg2Button.setEnabled(true);
+                });
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> {
+                    progressDialog.dispose();
+                    compareWithOrg1Button.setEnabled(true);
+                    compareWithOrg2Button.setEnabled(true);
+                    showScrollableError(LanguageManager.get("err.comparison"), getDetailedErrorMessage(ex));
+                    ex.printStackTrace();
+                });
+            } finally {
+                if (cli != null) cli.close();
+            }
+        }).start();
+    }
+
+    // ---- Validação de caminho e varredura de pastas ---------------------
+
+    /**
+     * Valida o caminho do projeto local e habilita ou desabilita a aba
+     * "Comparar Repositório" de acordo com o resultado.
+     * Também dispara a varredura de pastas quando o caminho é válido.
+     */
+    private void validateAndScanPath() {
+        String path = projectSettingsPanel.getLocalPath();
+        if (path.isEmpty()) {
+            projectSettingsPanel.clearPathError();
+            tabbedPane.setEnabledAt(2, false);
+            if (tabbedPane.getSelectedIndex() == 2) tabbedPane.setSelectedIndex(0);
+            compareRepoPanel.resetCheckboxStates();
+            return;
+        }
+        if (!Files.isDirectory(Paths.get(path))) {
+            projectSettingsPanel.showPathError();
+            tabbedPane.setEnabledAt(2, false);
+            if (tabbedPane.getSelectedIndex() == 2) tabbedPane.setSelectedIndex(0);
+            compareRepoPanel.resetCheckboxStates();
+            return;
+        }
+        projectSettingsPanel.clearPathError();
+        scanProjectFolders(path);
+        tabbedPane.setEnabledAt(2, true);
+    }
+
+    /**
+     * Varre as pastas do projeto para cada tipo de metadado do registro e
+     * habilita apenas os checkboxes cujas pastas existem e possuem conteúdo.
+     */
+    private void scanProjectFolders(String basePath) {
+        compareRepoPanel.resetCheckboxStates();
+        for (MetadataRegistry.MetadataEntry entry : MetadataRegistry.ENTRIES) {
+            Path folderPath = Paths.get(basePath).resolve(entry.folderPath());
+            boolean hasContent = Files.isDirectory(folderPath) && hasFiles(folderPath);
+            compareRepoPanel.setCheckboxEnabled(entry.apiName(), hasContent);
+        }
+    }
+
+    /** Retorna {@code true} se o diretório existe e contém ao menos um arquivo ou subdiretório. */
+    private boolean hasFiles(Path dir) {
+        try (var stream = Files.list(dir)) {
+            return stream.findAny().isPresent();
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     private JButton createToolbarButton(String tooltip, Icon icon) {

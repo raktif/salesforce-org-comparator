@@ -21,7 +21,7 @@ if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 if not exist "%DIST_DIR%" mkdir "%DIST_DIR%"
 
 echo [1/3] Compiling Java sources...
-set CLASSPATH="%LIB_DIR%\*"
+set CLASSPATH=%LIB_DIR%\*
 
 cd /d "%SRC_DIR%"
 "%JAVA_HOME%\bin\javac" -cp "%CLASSPATH%" -d "%BUILD_DIR%" com\sfcomparator\model\*.java com\sfcomparator\api\*.java com\sfcomparator\cli\*.java com\sfcomparator\comparator\*.java com\sfcomparator\util\*.java com\sfcomparator\ui\*.java
