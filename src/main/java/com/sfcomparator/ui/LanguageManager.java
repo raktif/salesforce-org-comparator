@@ -20,11 +20,13 @@ public class LanguageManager {
 
     static {
         // ── Aplicação ──────────────────────────────────────────────────────
-        a("app.title",        "Salesforce Org Comparator - v1.0",      "Salesforce Org Comparator - v1.0");
-        a("header.title",     "Salesforce Org Comparator - v1.0",      "Salesforce Org Comparator - v1.0");
+        a("app.title",        "Salesforce Org Comparator - v1.1",      "Salesforce Org Comparator - v1.1");
+        a("header.title",     "Salesforce Org Comparator - v1.1",      "Salesforce Org Comparator - v1.1");
 
         // ── Abas ───────────────────────────────────────────────────────────
         a("tab.config",       "Configuração",    "Configuration");
+        a("tab.compareOrgs",  "Comparar Orgs",   "Compare Orgs");
+        a("tab.compareRepo",  "Comparar Repositório", "Compare Repository");
         a("tab.results",      "Resultados",      "Results");
 
         // ── Toolbar ────────────────────────────────────────────────────────
@@ -50,6 +52,11 @@ public class LanguageManager {
                               "Use the Security Token of the selected user in the environment");
         a("tip.clientId",     "Para autenticação OAuth", "For OAuth authentication");
         a("tip.clientSecret", "Para autenticação OAuth", "For OAuth authentication");
+
+        // ── Painel de configurações do projeto ─────────────────────────────
+        a("project.title",   "Configurações do Projeto",    "Project Settings");
+        a("lbl.localPath",   "Endereço local do projeto:",  "Local project path:");
+        a("tip.localPath",   "Exemplo: C:\\nomeDoProjeto",  "Example: C:\\myProject");
 
         // ── Painel de configuração ─────────────────────────────────────────
         a("config.title",           "Configurações de Comparação",                           "Comparison Settings");
@@ -202,8 +209,119 @@ public class LanguageManager {
         a("btn.close",   "Fechar",              "Close");
 
         // ── Erros ──────────────────────────────────────────────────────────
-        a("err.comparison", "Erro na Comparação", "Comparison Error");
+        a("err.comparison", "Erro na Compara\u00e7\u00e3o", "Comparison Error");
         a("err.title",      "Erro",               "Error");
+
+        // ── Aba Comparar Reposit\u00f3rio ────────────────────────────────────────
+        a("lbl.repo.selectMetadata",
+            "Escolha quais metadados comparar do seu reposit\u00f3rio local com sua org:",
+            "Choose which metadata to compare from your local repository with your org:");
+
+        // Tooltips dos checkboxes — nomenclatura oficial Salesforce (PT-BR / EN)
+        a("tip.repo.ApexClass",                            "Classes Apex",                                              "Apex Classes");
+        a("tip.repo.ApexComponent",                        "Componentes Visualforce",                                   "Visualforce Components");
+        a("tip.repo.ApexPage",                             "P\u00e1ginas Visualforce",                                  "Visualforce Pages");
+        a("tip.repo.ApexTestSuite",                        "Su\u00edtes de Teste Apex",                                 "Apex Test Suites");
+        a("tip.repo.ApexTrigger",                          "Apex Triggers",                                             "Apex Triggers");
+        a("tip.repo.ApprovalProcess",                      "Processos de Aprova\u00e7\u00e3o",                          "Approval Processes");
+        a("tip.repo.AssignmentRule",                       "Regra de Atribui\u00e7\u00e3o",                             "Assignment Rule");
+        a("tip.repo.AssignmentRules",                      "Regras de Atribui\u00e7\u00e3o",                            "Assignment Rules");
+        a("tip.repo.AuraDefinitionBundle",                 "Componentes Aura",                                          "Aura Components");
+        a("tip.repo.AuthProvider",                         "Provedores de Autentica\u00e7\u00e3o",                       "Auth Providers");
+        a("tip.repo.Bot",                                  "Bots",                                                      "Bots");
+        a("tip.repo.BrandingSet",                          "Conjuntos de Identidade Visual",                            "Branding Sets");
+        a("tip.repo.CompactLayout",                        "Layouts Compactos",                                         "Compact Layouts");
+        a("tip.repo.ConnectedApp",                         "Aplicativos Conectados",                                    "Connected Apps");
+        a("tip.repo.ContentAsset",                         "Ativos de Conte\u00fado",                                   "Content Assets");
+        a("tip.repo.CustomApplication",                    "Aplicativos Personalizados",                                "Custom Applications");        a("tip.repo.CustomIndex",                          "Índices Personalizados",                                   "Custom Indexes");        a("tip.repo.CustomLabel",                          "R\u00f3tulo Personalizado",                                 "Custom Label");
+        a("tip.repo.CustomLabels",                         "R\u00f3tulos Personalizados",                               "Custom Labels");
+        a("tip.repo.CustomMetadata",                       "Tipos de Metadados Personalizados",                         "Custom Metadata Types");
+        a("tip.repo.CustomNotificationType",               "Tipos de Notifica\u00e7\u00e3o Personalizados",             "Custom Notification Types");
+        a("tip.repo.CustomObject",                         "Objetos Personalizados",                                    "Custom Objects");
+        a("tip.repo.CustomObjectTranslation",              "Tradu\u00e7\u00f5es de Objetos Personalizados",             "Custom Object Translations");
+        a("tip.repo.CustomPermission",                     "Permiss\u00f5es Personalizadas",                            "Custom Permissions");
+        a("tip.repo.CustomTab",                            "Guias Personalizadas",                                      "Custom Tabs");
+        a("tip.repo.Dashboard",                            "Pain\u00e9is",                                              "Dashboards");
+        a("tip.repo.DataCategoryGroup",                    "Grupos de Categorias de Dados",                             "Data Category Groups");
+        a("tip.repo.DuplicateRule",                        "Regras de Duplicidade",                                     "Duplicate Rules");
+        a("tip.repo.EclairGeoData",                        "Dados Geogr\u00e1ficos Eclair",                             "Eclair Geo Data");
+        a("tip.repo.EmailServicesFunction",                "Servi\u00e7os de E-mail",                                   "Email Services");
+        a("tip.repo.EmailTemplate",                        "Modelos de E-mail",                                         "Email Templates");
+        a("tip.repo.ExternalClientApplication",            "Aplica\u00e7\u00f5es Cliente Externas",                     "External Client Applications");
+        a("tip.repo.ExternalCredential",                   "Credenciais Externas",                                      "External Credentials");
+        a("tip.repo.ExtlClntAppConfigurablePolicies",      "Pol\u00edticas Configur\u00e1veis de App Cliente Externo",   "External Client App Configurable Policies");
+        a("tip.repo.ExtlClntAppGlobalOauthSettings",       "Configura\u00e7\u00f5es OAuth Globais de App Cliente Externo", "External Client App Global OAuth Settings");
+        a("tip.repo.ExtlClntAppOauthConfigurablePolicies", "Pol\u00edticas OAuth Configur\u00e1veis de App Cliente Externo", "External Client App OAuth Configurable Policies");
+        a("tip.repo.ExtlClntAppOauthSettings",             "Configura\u00e7\u00f5es OAuth de App Cliente Externo",      "External Client App OAuth Settings");
+        a("tip.repo.FieldSet",                             "Conjuntos de Campos",                                       "Field Sets");
+        a("tip.repo.FlexiPage",                            "P\u00e1ginas Lightning",                                    "Lightning Pages");
+        a("tip.repo.Flow",                                 "Fluxos",                                                    "Flows");
+        a("tip.repo.FlowDefinition",                       "Defini\u00e7\u00f5es de Fluxo",                             "Flow Definitions");
+        a("tip.repo.FlowTest",                             "Testes de Fluxo",                                           "Flow Tests");
+        a("tip.repo.GenAiFunction",                        "Fun\u00e7\u00f5es de IA Generativa",                        "Generative AI Functions");
+        a("tip.repo.GenAiPlannerBundle",                   "Pacotes de Planejamento de IA Generativa",                  "Generative AI Planner Bundles");
+        a("tip.repo.GenAiPromptTemplate",                  "Modelos de Prompt de IA Generativa",                        "Generative AI Prompt Templates");
+        a("tip.repo.GlobalValueSet",                       "Conjuntos de Valores Globais",                              "Global Value Sets");
+        a("tip.repo.GlobalValueSetTranslation",            "Tradu\u00e7\u00f5es de Conjuntos de Valores Globais",       "Global Value Set Translations");
+        a("tip.repo.Group",                                "Grupos P\u00FAblicos",                                      "Public Groups");
+        a("tip.repo.Layout",                               "Layouts de P\u00e1gina",                                    "Page Layouts");
+        a("tip.repo.LeadConvertSettings",                  "Configura\u00e7\u00f5es de Convers\u00e3o de Lead",         "Lead Convert Settings");
+        a("tip.repo.Letterhead",                           "Timbres",                                                   "Letterheads");
+        a("tip.repo.LightningComponentBundle",             "Lightning Web Components",                                  "Lightning Web Components");
+        a("tip.repo.LightningExperienceTheme",             "Temas da Lightning Experience",                             "Lightning Experience Themes");
+        a("tip.repo.LightningMessageChannel",              "Canais de Mensagem Lightning",                              "Lightning Message Channels");
+        a("tip.repo.ListView",                             "Visualiza\u00e7\u00f5es de Lista",                          "List Views");
+        a("tip.repo.MatchingRule",                         "Regra de Correspond\u00eancia",                             "Matching Rule");
+        a("tip.repo.MatchingRules",                        "Regras de Correspond\u00eancia",                            "Matching Rules");
+        a("tip.repo.NamedCredential",                      "Credenciais Nomeadas",                                      "Named Credentials");
+        a("tip.repo.NotificationTypeConfig",               "Configura\u00e7\u00f5es de Tipos de Notifica\u00e7\u00e3o", "Notification Type Configurations");
+        a("tip.repo.OmniDataTransform",                    "Transforma\u00e7\u00f5es de Dados OmniStudio",              "OmniStudio Data Transforms");
+        a("tip.repo.OmniIntegrationProcedure",             "Procedimentos de Integra\u00e7\u00e3o OmniStudio",          "OmniStudio Integration Procedures");
+        a("tip.repo.OmniInteractionConfig",                "Configura\u00e7\u00f5es de Intera\u00e7\u00e3o OmniStudio", "OmniStudio Interaction Configurations");
+        a("tip.repo.OmniScript",                           "Scripts OmniStudio",                                        "OmniStudio Scripts");
+        a("tip.repo.OmniUiCard",                           "Cards de Interface OmniStudio",                             "OmniStudio UI Cards");
+        a("tip.repo.ParticipantRole",                      "Fun\u00e7\u00f5es de Participante",                         "Participant Roles");
+        a("tip.repo.PathAssistant",                        "Assistentes de Caminho (Path)",                             "Path Assistants");
+        a("tip.repo.PermissionSet",                        "Conjuntos de Permiss\u00f5es",                              "Permission Sets");
+        a("tip.repo.PermissionSetGroup",                   "Grupos de Conjuntos de Permiss\u00f5es",                    "Permission Set Groups");
+        a("tip.repo.PlatformCachePartition",               "Parti\u00e7\u00f5es de Cache da Plataforma",                "Platform Cache Partitions");
+        a("tip.repo.PlatformEventChannelMember",           "Membros de Canal de Evento da Plataforma",                  "Platform Event Channel Members");
+        a("tip.repo.PostTemplate",                         "Modelos de Publica\u00e7\u00e3o",                           "Post Templates");
+        a("tip.repo.PresenceUserConfig",                   "Configura\u00e7\u00f5es de Usu\u00e1rio de Presen\u00e7a",  "Presence User Configurations");
+        a("tip.repo.Profile",                              "Perfis",                                                    "Profiles");
+        a("tip.repo.ProfilePasswordPolicy",                "Pol\u00edticas de Senha de Perfil",                         "Profile Password Policies");
+        a("tip.repo.ProfileSessionSetting",                "Configura\u00e7\u00f5es de Sess\u00e3o de Perfil",          "Profile Session Settings");
+        a("tip.repo.Prompt",                               "Prompts",                                                   "Prompts");
+        a("tip.repo.Queue",                                "Filas",                                                     "Queues");
+        a("tip.repo.QueueRoutingConfig",                   "Configura\u00e7\u00f5es de Roteamento de Fila",             "Queue Routing Configurations");
+        a("tip.repo.QuickAction",                          "A\u00e7\u00f5es R\u00e1pidas",                              "Quick Actions");
+        a("tip.repo.RecordAlertCategory",                  "Categorias de Alertas de Registro",                         "Record Alert Categories");
+        a("tip.repo.RecordType",                           "Tipos de Registro",                                         "Record Types");
+        a("tip.repo.RemoteSiteSetting",                    "Configura\u00e7\u00f5es de Site Remoto",                    "Remote Site Settings");
+        a("tip.repo.Report",                               "Relat\u00f3rios",                                           "Reports");
+        a("tip.repo.ReportType",                           "Tipos de Relat\u00f3rio",                                   "Report Types");
+        a("tip.repo.Role",                                 "Fun\u00e7\u00f5es (Hierarquia)",                            "Roles");
+        a("tip.repo.ServiceChannel",                       "Canais de Servi\u00e7o",                                    "Service Channels");
+        a("tip.repo.Settings",                             "Configura\u00e7\u00f5es da Org",                            "Org Settings");
+        a("tip.repo.SharingRules",                         "Regras de Compartilhamento",                                "Sharing Rules");
+        a("tip.repo.StandardValueSetTranslation",          "Tradu\u00e7\u00f5es de Conjuntos de Valores Padr\u00e3o",   "Standard Value Set Translations");
+        a("tip.repo.StaticResource",                       "Recursos Est\u00e1ticos",                                   "Static Resources");
+        a("tip.repo.Territory2",                           "Territ\u00f3rios (Gerenciamento)",                          "Territory Management Territories");
+        a("tip.repo.Territory2Model",                      "Modelos de Gerenciamento de Territ\u00f3rios",              "Territory Management Models");
+        a("tip.repo.Territory2Rule",                       "Regras de Gerenciamento de Territ\u00f3rios",               "Territory Management Rules");
+        a("tip.repo.Territory2Type",                       "Tipos de Gerenciamento de Territ\u00f3rios",                "Territory Management Types");
+        a("tip.repo.TopicsForObjects",                     "T\u00f3picos para Objetos",                                 "Topics for Objects");
+        a("tip.repo.Translations",                         "Tradu\u00e7\u00f5es",                                       "Translations");
+        a("tip.repo.ValidationRule",                       "Regras de Valida\u00e7\u00e3o",                             "Validation Rules");
+        a("tip.repo.Workflow",                             "Regras de Workflow",                                        "Workflow Rules");
+        a("lbl.path.notFound",                             "O endere\u00e7o especificado n\u00e3o foi encontrado",       "The specified path was not found");
+        a("btn.compareRepo",                               "Comparar com Reposit\u00f3rio",                            "Compare with Repository");
+        a("btn.compareWithOrg1",                           "Comparar com Org 1",                                       "Compare with Org 1");
+        a("btn.compareWithOrg2",                           "Comparar com Org 2",                                       "Compare with Org 2");
+        a("msg.repo.warn.text",                            "Selecionar mais de 3 metadados para comparar, pode demorar muito a responder. Deseja continuar?", "Selecting more than 3 metadata types to compare may take a long time. Do you want to continue?");
+        a("msg.repo.warn.title",                           "Aten\u00e7\u00e3o",                                        "Warning");
+        a("btn.yes",                                       "Sim",                                                      "Yes");
+        a("btn.no",                                        "N\u00e3o",                                                  "No");
     }
 
     private static void a(String key, String pt, String en) {
