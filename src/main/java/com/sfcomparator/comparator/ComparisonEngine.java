@@ -27,6 +27,9 @@ public class ComparisonEngine {
     private Consumer<String> progressCallback = msg -> {};
     private AtomicBoolean cancelFlag = null;
 
+    /** Tamanho máximo (bytes) de cada arquivo para armazenar conteúdo no diff viewer. */
+    private static final long MAX_DIFF_CONTENT_BYTES = 300_000L;
+
     public ComparisonEngine(CLIExecutor cli, ComparisonConfig config) {
         this.cli         = cli;
         this.config      = config;
@@ -237,6 +240,13 @@ public class ComparisonEngine {
                     Difference diff = new Difference(Difference.DifferenceType.METADATA_STRUCTURE_MISMATCH,
                         category, name, "Divergent", "Divergent");
                     diff.setDetails(String.join(" | ", diffs));
+                    // Armazena corpo do Apex para o diff viewer quando o conteúdo difere
+                    if (!b1.equals(b2)
+                            && b1.length() <= MAX_DIFF_CONTENT_BYTES
+                            && b2.length() <= MAX_DIFF_CONTENT_BYTES) {
+                        diff.setContent1(b1);
+                        diff.setContent2(b2);
+                    }
                     differences.add(diff);
                 }
             }
@@ -376,14 +386,54 @@ public class ComparisonEngine {
     private void compareFileLineCount(String category, String name,
                                        Path file1, Path file2) throws Exception {
         if (file1 == null || file2 == null) return; // presenca/ausencia ja tratada
-        long lines1 = countLines(file1);
-        long lines2 = countLines(file2);
+        long size1 = Files.size(file1);
+        long size2 = Files.size(file2);
+
+        // Normaliza o conteúdo antes de comparar e armazenar:
+        //   1. CRLF/CR → LF
+        //   2. Remove trailing whitespace de cada linha
+        // Evita falsos positivos por CRLF, espaços finais invisíveis ou newline final divergente.
+        String content1Str = normalizeContent(Files.readString(file1, StandardCharsets.UTF_8));
+        String content2Str = normalizeContent(Files.readString(file2, StandardCharsets.UTF_8));
+
+        if (content1Str.stripTrailing().equals(content2Str.stripTrailing())) return;
+
+        long lines1 = countLinesInString(content1Str);
+        long lines2 = countLinesInString(content2Str);
         if (lines1 != lines2) {
             Difference diff = new Difference(Difference.DifferenceType.METADATA_STRUCTURE_MISMATCH,
                 category, name, "Divergent", "Divergent");
             diff.setDetails("Org1: " + lines1 + " lines | Org2: " + lines2 + " lines");
+            // Armazena conteúdo normalizado para o diff viewer
+            if (size1 <= MAX_DIFF_CONTENT_BYTES && size2 <= MAX_DIFF_CONTENT_BYTES) {
+                diff.setContent1(content1Str);
+                diff.setContent2(content2Str);
+            }
             differences.add(diff);
         }
+    }
+
+    /** Conta linhas em uma string já com terminadores normalizados para LF. */
+    private static long countLinesInString(String s) {
+        if (s.isEmpty()) return 0;
+        long n = s.chars().filter(c -> c == '\n').count();
+        // Se a string não termina com '\n', a última linha não possui newline
+        return s.charAt(s.length() - 1) == '\n' ? n : n + 1;
+    }
+
+    /**
+     * Normaliza o conteúdo de um arquivo texto para comparação e armazenamento:
+     * converte CRLF/CR para LF e remove espaços/tabs no final de cada linha.
+     */
+    private static String normalizeContent(String raw) {
+        String lf = raw.replace("\r\n", "\n").replace("\r", "\n");
+        String[] lines = lf.split("\n", -1);
+        StringBuilder sb = new StringBuilder(lf.length());
+        for (int i = 0; i < lines.length; i++) {
+            if (i > 0) sb.append('\n');
+            sb.append(lines[i].stripTrailing());
+        }
+        return sb.toString();
     }
 
     private Map<String, Path> findMetadataFiles(Path root, String extension) {
@@ -414,12 +464,6 @@ public class ComparisonEngine {
             }
         }
         return filtered;
-    }
-
-    private long countLines(Path file) throws Exception {
-        try (var stream = Files.lines(file, StandardCharsets.UTF_8)) {
-            return stream.count();
-        }
     }
 
     private Set<String> extractStringSet(JSONArray records, String fieldName) {

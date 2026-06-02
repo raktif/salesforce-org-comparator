@@ -16,6 +16,10 @@ public class Difference {
     private String org1Value;
     private String org2Value;
     private String details;
+    /** Conteúdo completo do lado esquerdo (local ou Org 1) para exibição no diff viewer. */
+    private String content1;
+    /** Conteúdo completo do lado direito (org ou Org 2) para exibição no diff viewer. */
+    private String content2;
 
     public Difference(DifferenceType type, String category, String name, String org1Value, String org2Value) {
         this.type = type;
@@ -32,6 +36,10 @@ public class Difference {
     public String getOrg2Value() { return org2Value; }
     public String getDetails() { return details; }
     public void setDetails(String details) { this.details = details; }
+    public String getContent1() { return content1; }
+    public String getContent2() { return content2; }
+    public void setContent1(String content1) { this.content1 = content1; }
+    public void setContent2(String content2) { this.content2 = content2; }
 
     @Override
     public String toString() {
