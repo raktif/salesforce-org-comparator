@@ -20,8 +20,8 @@ public class LanguageManager {
 
     static {
         // ── Aplicação ──────────────────────────────────────────────────────
-        a("app.title",        "Salesforce Org Comparator - v1.1",      "Salesforce Org Comparator - v1.1");
-        a("header.title",     "Salesforce Org Comparator - v1.1",      "Salesforce Org Comparator - v1.1");
+        a("app.title",        "Salesforce Org Comparator - v1.2",      "Salesforce Org Comparator - v1.2");
+        a("header.title",     "Salesforce Org Comparator - v1.2",      "Salesforce Org Comparator - v1.2");
 
         // ── Abas ───────────────────────────────────────────────────────────
         a("tab.config",       "Configuração",    "Configuration");
@@ -207,7 +207,16 @@ public class LanguageManager {
         // ── Ajuda / Idioma ─────────────────────────────────────────────────
         a("help.title",  "Manual do Usuário",    "User Manual");
         a("btn.close",   "Fechar",              "Close");
-
+        // ── Visualizador de Diff ───────────────────────────────────────────
+        a("diff.title",          "Compara\u00e7\u00e3o",    "Comparison");
+        a("diff.col.content",    "Conte\u00FAdo",            "Content");
+        a("diff.label.local",    "Reposit\u00F3rio Local",  "Local Repository");
+        a("diff.label.org1",     "Org 1",                    "Org 1");
+        a("diff.label.org2",     "Org 2",                    "Org 2");
+        a("diff.legend.equal",     "Igual",                        "Equal");
+        a("diff.legend.changed",   "Alterado",                     "Changed");
+        a("diff.legend.leftonly",  "Somente \u00e0 esquerda",       "Left side only");
+        a("diff.legend.rightonly", "Somente \u00e0 direita",        "Right side only");
         // ── Erros ──────────────────────────────────────────────────────────
         a("err.comparison", "Erro na Compara\u00e7\u00e3o", "Comparison Error");
         a("err.title",      "Erro",               "Error");

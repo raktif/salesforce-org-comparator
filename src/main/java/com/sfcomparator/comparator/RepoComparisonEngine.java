@@ -5,6 +5,7 @@ import com.sfcomparator.model.Difference;
 import com.sfcomparator.model.MetadataRegistry;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,6 +33,9 @@ public class RepoComparisonEngine {
     private final List<Difference> differences = new ArrayList<>();
     private Consumer<String> progressCallback = msg -> {};
     private AtomicBoolean cancelFlag = null;
+
+    /** Tamanho máximo (bytes) de cada arquivo para armazenar conteúdo no diff viewer. */
+    private static final long MAX_DIFF_CONTENT_BYTES = 300_000L;
 
     public RepoComparisonEngine(CLIExecutor cli, String basePath,
                                 List<String> selectedApiNames, int orgNumber) {
@@ -147,24 +151,47 @@ public class RepoComparisonEngine {
                                      Path local, Path org) throws IOException {
         long localSize = Files.size(local);
         long orgSize   = Files.size(org);
-        boolean same;
-        if (localSize != orgSize) {
-            same = false;
-        } else if (localSize > 5_000_000L) {
-            same = true; // arquivos muito grandes: presume igual se tamanho coincide
-        } else {
-            same = Arrays.equals(Files.readAllBytes(local), Files.readAllBytes(org));
+
+        // Para arquivos muito grandes: heurística de tamanho de bytes (sem normalização nem diff viewer)
+        if (localSize > 5_000_000L || orgSize > 5_000_000L) {
+            if (localSize != orgSize) {
+                String details = String.format("Local: %,d bytes | Org %d: %,d bytes",
+                    localSize, orgNumber, orgSize);
+                Difference d = new Difference(Difference.DifferenceType.METADATA_STRUCTURE_MISMATCH,
+                    category, name,
+                    orgNumber == 1 ? "Divergent" : "-",
+                    orgNumber == 2 ? "Divergent" : "-");
+                d.setDetails(details);
+                differences.add(d);
+            }
+            return;
         }
-        if (!same) {
-            String details = String.format("Local: %,d bytes | Org %d: %,d bytes",
-                localSize, orgNumber, orgSize);
-            Difference d = new Difference(Difference.DifferenceType.METADATA_STRUCTURE_MISMATCH,
-                category, name,
-                orgNumber == 1 ? "Divergent" : "-",
-                orgNumber == 2 ? "Divergent" : "-");
-            d.setDetails(details);
-            differences.add(d);
+
+        // Lê e normaliza o conteúdo antes de comparar:
+        //   1. CRLF/CR → LF
+        //   2. Remove trailing whitespace de cada linha
+        // Elimina falsos positivos causados por diferenças de encoding de nova linha ou
+        // por espaços/tabs finais invisíveis adicionados pelo Salesforce CLI.
+        String localContent = normalizeContent(new String(Files.readAllBytes(local), StandardCharsets.UTF_8));
+        String orgContent   = normalizeContent(new String(Files.readAllBytes(org),   StandardCharsets.UTF_8));
+
+        // stripTrailing() ignora também newlines finais divergentes (ex.: arquivo local
+        // sem '\n' final vs arquivo da org com '\n' final).
+        if (localContent.stripTrailing().equals(orgContent.stripTrailing())) return;
+
+        String details = String.format("Local: %,d bytes | Org %d: %,d bytes",
+            localSize, orgNumber, orgSize);
+        Difference d = new Difference(Difference.DifferenceType.METADATA_STRUCTURE_MISMATCH,
+            category, name,
+            orgNumber == 1 ? "Divergent" : "-",
+            orgNumber == 2 ? "Divergent" : "-");
+        d.setDetails(details);
+        // Armazena conteúdo normalizado para o diff viewer
+        if (localSize <= MAX_DIFF_CONTENT_BYTES && orgSize <= MAX_DIFF_CONTENT_BYTES) {
+            d.setContent1(localContent);
+            d.setContent2(orgContent);
         }
+        differences.add(d);
     }
 
     // -----------------------------------------------------------------------
@@ -187,8 +214,12 @@ public class RepoComparisonEngine {
 
     /**
      * Percorre recursivamente {@code dir} e retorna todos os arquivos {@code *-meta.xml}
-     * com chave = nome do arquivo sem o sufixo {@code "-meta.xml"} (ex.:
-     * {@code "BRAT_PS_RECORD_ALERT.permissionset"}).
+     * com chave = <strong>nome completo do arquivo</strong>, incluindo o sufixo
+     * {@code "-meta.xml"} (ex.: {@code "BRAT_PS_RECORD_ALERT.permissionset-meta.xml"}).
+     * <p>
+     * Manter o sufixo garante que a chave represente fielmente o arquivo comparado
+     * (evita ambiguidade com arquivos de código homônimos, como {@code .trigger} vs
+     * {@code .trigger-meta.xml}) e que o nome exibido na tabela de resultados seja preciso.
      * <p>
      * Usar apenas o nome do arquivo (sem caminho relativo) garante que a correspondência
      * funcione independentemente de onde o CLI Salesforce deposita os arquivos dentro do
@@ -204,9 +235,10 @@ public class RepoComparisonEngine {
                 .sorted()
                 .forEach(p -> {
                     String fn = p.getFileName().toString();
-                    // putIfAbsent: em caso de colisão (ex.: campos com mesmo nome em
-                    // objetos distintos), mantém o primeiro arquivo encontrado.
-                    map.putIfAbsent(fn.substring(0, fn.length() - "-meta.xml".length()), p);
+                    // Usa o nome completo (com -meta.xml) como chave para que o
+                    // resultado exibido reflita exatamente o arquivo comparado.
+                    // putIfAbsent: em caso de colisão de nome, mantém o primeiro encontrado.
+                    map.putIfAbsent(fn, p);
                 });
         } catch (IOException e) { /* ignorar */ }
         return map;
@@ -223,5 +255,25 @@ public class RepoComparisonEngine {
         String m = e.getMessage();
         if (m == null) return e.getClass().getSimpleName();
         return m.length() > 250 ? m.substring(0, 250) + "..." : m;
+    }
+
+    /**
+     * Normaliza o conteúdo de um arquivo texto para comparação e armazenamento:
+     * <ol>
+     *   <li>Converte terminadores de linha CRLF/CR para LF.</li>
+     *   <li>Remove espaços e tabs no final de cada linha (trailing whitespace).</li>
+     * </ol>
+     * Elimina falsos positivos causados apenas por diferenças de formatação irrelevante
+     * inseridas por ferramentas externas (ex.: Salesforce CLI, Git, editores).
+     */
+    private static String normalizeContent(String raw) {
+        String lf = raw.replace("\r\n", "\n").replace("\r", "\n");
+        String[] lines = lf.split("\n", -1);
+        StringBuilder sb = new StringBuilder(lf.length());
+        for (int i = 0; i < lines.length; i++) {
+            if (i > 0) sb.append('\n');
+            sb.append(lines[i].stripTrailing());
+        }
+        return sb.toString();
     }
 }

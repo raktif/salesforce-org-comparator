@@ -96,7 +96,8 @@ public class ResultsPanel extends JPanel {
             }
         });
 
-        // Duplo clique abre dialog com o conteudo completo da coluna Details
+        // Duplo clique: se a diferença é Divergente e tem conteúdo armazenado, abre o
+        // DiffViewerWindow; caso contrário exibe o texto da coluna Details.
         resultsTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -104,6 +105,19 @@ public class ResultsPanel extends JPanel {
                 int viewRow = resultsTable.getSelectedRow();
                 if (viewRow < 0) return;
                 int modelRow = sorter.convertRowIndexToModel(viewRow);
+
+                // Tenta abrir o visualizador de diff quando há conteúdo disponível
+                if (lastDifferences != null && modelRow < lastDifferences.size()) {
+                    Difference diff = lastDifferences.get(modelRow);
+                    if (diff.getContent1() != null && diff.getContent2() != null) {
+                        Window owner = SwingUtilities.getWindowAncestor(ResultsPanel.this);
+                        Frame frame  = (owner instanceof Frame) ? (Frame) owner : null;
+                        new DiffViewerWindow(frame, diff);
+                        return;
+                    }
+                }
+
+                // Fallback: exibe o texto da coluna Details em um dialog simples
                 Object val = tableModel.getValueAt(modelRow, 4);
                 if (val == null || val.toString().isBlank()) return;
                 JTextArea text = new JTextArea(val.toString());
